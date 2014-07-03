@@ -1,0 +1,7 @@
+language: node_js
+node_js:
+  - '0.10'
+before_install:
+  - currentfolder=${PWD##*/}
+  - if [ "$currentfolder" != 'generator-tornado' ]; then cd .. && eval "mv $currentfolder generator-tornado" && cd generator-tornado; fi
+

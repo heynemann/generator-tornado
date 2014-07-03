@@ -92,6 +92,41 @@ var TornadoGenerator = yeoman.generators.Base.extend({
       { name: "SQL Alchemy", value: "sqlalchemy", checked: false },
     ];
 
+    var angularModules = [
+      { name: "angular-animate.js", value:"animate", checked: true },
+      { name: "angular-cookies.js", value:"cookies", checked: true },
+      { name: "angular-resource.js", value:"resource", checked: true },
+      { name: "angular-route.js", value:"route", checked: true },
+      { name: "angular-sanitize.js", value:"sanitize", checked: true },
+      { name: "angular-touch.js", value:"touch", checked: true }
+    ];
+
+    var ormChoices = [
+      { name: "MongoEngine", value:"mongoengine", checked: true },
+      { name: "MotorEngine (Not yet supported)", value:"motorengine", checked: false },
+      { name: "Redisco (Not yet supported)", value:"redisco", checked: false },
+      { name: "SQLAlchemy (Not yet supported)", value:"sqlalchemy", checked: false },
+    ];
+
+    var oauthProviders = [
+      { name: "Google", value:"google", checked: true },
+      { name: "Facebook (Not yet supported)", value:"facebook", checked: false },
+      { name: "Twitter (Not yet supported)", value:"twitter", checked: false },
+      { name: "Github (Not yet supported)", value:"github", checked: false }
+    ];
+
+    var angularEnabled = function (props) {
+      return props.angularApp;
+    };
+
+    var restAppEnabled = function (props) {
+      return props.restApp;
+    };
+
+    var authEnabled = function(props) {
+      return props.authentication;
+    };
+
     getUserNameAndEmail(function() {
       var prompts = [{
         type: 'input',
@@ -143,11 +178,56 @@ var TornadoGenerator = yeoman.generators.Base.extend({
         message: 'Plug-ins you want to use (will be configured for you):',
         choices: plugins
       }, {
+        type: 'confirm',
+        name: 'authentication',
+        message: 'Support OAUTH Authentication?',
+        default: false
+      }, {
+        type: 'checkbox',
+        name: 'oauthProviders',
+        message: 'Which authentication providers will you be using?',
+        choices: oauthProviders
+      }, {
         type: 'checkbox',
         name: 'services',
         message: 'Services you need to run',
         choices: services
-      }];
+      }, {
+        type: 'confirm',
+        name: 'angularApp',
+        message: 'Generate AngularJS web application?',
+        default: false
+      }, {
+        when: angularEnabled,
+        type: 'confirm',
+        name: 'angularUseSass',
+        message: '[Angular App] Would you like to use Sass (with Compass)?',
+        default: false
+      }, {
+        when: angularEnabled,
+        type: 'confirm',
+        name: 'angularUseBootstrap',
+        message: '[Angular App] Would you like to include Boostrap?',
+        default: false
+      }, {
+        when: angularEnabled,
+        type: 'checkbox',
+        name: 'angularModules',
+        message: '[Angular App] Which modules would you like to include?',
+        choices: angularModules
+      }, {
+        type: 'confirm',
+        name: 'restApp',
+        message: 'Include REST API?',
+        default: false
+      }, {
+        when: restAppEnabled,
+        type: 'list',
+        name: 'restModelFramework',
+        message: '[Rest API] What ORM would you like to use for the Rest framework?',
+        choices: ormChoices
+      }
+      ];
 
       this.prompt(prompts, function (props) {
         var versions = [];
@@ -195,7 +275,29 @@ var TornadoGenerator = yeoman.generators.Base.extend({
           process.exit(1);
         }
 
-        console.log(pkgPlugins);
+        var pkgProviders = {
+          google: false,
+          facebook: false,
+          twitter: false,
+          github: false
+        };
+
+        for (var i=0; i < props.oauthProviders.length; i++) {
+          pkgProviders[props.oauthProviders[i]] = true;
+        }
+
+        var pkgAngularModules = {
+          animate: false,
+          cookies: false,
+          resource: false,
+          route: false,
+          sanitize: false,
+          touch: false
+        };
+
+        for (var i=0; i < props.angularModules.length; i++) {
+          pkgAngularModules[props.angularModules[i]] = true;
+        }
 
         var pythonPackageName = props.packageName.replace(/(\s|-)+/g, '_');
 
@@ -214,14 +316,24 @@ var TornadoGenerator = yeoman.generators.Base.extend({
           troves: troves,
           url: props.url,
           license: props.license,
-          includePackageData: props.packageData,
+          includePackageData: true,
           created: {
             day: new Date().getDay(),
             month: new Date().getMonth() + 1,
             year: new Date().getFullYear()
           },
-          services: pkgServices
+          services: pkgServices,
+          restApi: props.restApp,
+          angularApp: props.angularApp,
+          angularUseSass: props.angularUseSass,
+          angularUseBootstrap: props.angularUseBootstrap,
+          angularModules: pkgAngularModules,
+          authentication: props.authentication,
+          oauthProviders: pkgProviders,
+          restModelFramework: props.restModelFramework
         };
+
+        console.log(this.package);
 
         done();
       }.bind(this));

@@ -30,10 +30,26 @@ function getUserNameAndEmail(callback) {
 }
 
 function validatePlugins(plugins) {
-  var mongoPlugins = (plugins.MongoEngine ? 1 : 0) + (plugins.Motor ? 1 : 0) + (plugins.MotorEngine ? 1 : 0)
+  var errors = [];
+  var mongoPlugins = (plugins.mongoengine ? 1 : 0) + (plugins.motor ? 1 : 0) + (plugins.motorengine ? 1 : 0);
 
   if (mongoPlugins > 1) {
-    console.log("Can't have more than one plugin for MongoDB. Choose either Motor, MongoEngine or MotorEngine.");
+    errors.push(">>> Can't have more than one plugin for MongoDB. Choose either Motor, MongoEngine or MotorEngine.");
+  }
+
+  var redisPlugins =  (plugins.toredis ? 1 : 0) + (plugins.redis ? 1 : 0);
+
+  if (mongoPlugins > 1) {
+    errors.push(">>> Can't have more than one plugin for Redis. Choose either Toredis or Redis.");
+  }
+
+  if (errors.length > 0) {
+    console.log()
+    console.log("Unable to generate tornado app, due to validation errors:")
+    console.log(errors.join("\n"))
+    console.log()
+    console.log("Please verify your options and try again.")
+    console.log()
     return false;
   }
 
